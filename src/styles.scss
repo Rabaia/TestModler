@@ -1,0 +1,101 @@
+.App {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.wrap {
+  display: flex;
+}
+.content {
+  flex: 1;
+}
+.extraContent {
+  min-width: 240px;
+  text-align: right;
+}
+.contentLink {
+  padding-top: 16px;
+}
+.contentLink a {
+  display: inline-block;
+  vertical-align: text-top;
+  margin-right: 32px;
+}
+.contentLink a img {
+  margin-right: 8px;
+}
+
+body,
+html {
+  min-height: 100%;
+  background: #f0f2f5;
+}
+
+.login-form {
+  max-width: 300px;
+}
+.login-form-forgot {
+  float: right;
+}
+.login-form-button {
+  width: 100%;
+}
+
+.bjs-powered-by {
+  display: none !important;
+}
+
+#root {
+  display: flex;
+  min-height:100%;
+}
+
+.LoginPage {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  // background: orange;?
+  // &__content {
+  //   background: red;
+  //   display: flex;
+  // }
+}
+
+
+@keyframes jump {
+  50% { top: 5px; }
+}
+
+
+  .token {
+    position: relative;
+    top:0;
+    display: inline-block;
+    background: #52b415;
+    color: #FFF;
+    border-radius: 100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    text-align: center;
+    font-size: 16px;
+    user-select: none;
+    animation: jump 1s infinite;
+    animation-timing-function: ease;
+    font-family: 'Arial', sans-serif;
+  }
+
+
+  .definition-grid {
+    .ant-card-body {
+      box-shadow: 1px 0 0 0 #e8e8e8, 0 1px 0 0 #e8e8e8, 1px 1px 0 0 #e8e8e8, inset 1px 0 0 0 #e8e8e8, inset 0 1px 0 0 #e8e8e8;
+      transition: box-shadow .2s ease-in;
+      &:hover {
+        z-index: 1;
+        position: relative;
+        box-shadow:0 2px 8px rgba(0,0,0,.15)
+      }
+    }
+  }

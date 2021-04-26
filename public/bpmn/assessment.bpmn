@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1crppix" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.1">
+  <bpmn:process id="ApplicantsAssessment" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_0ho4q8r</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0ho4q8r" sourceRef="StartEvent_1" targetRef="ExclusiveGateway_1geujqr" />
+    <bpmn:parallelGateway id="ExclusiveGateway_1geujqr">
+      <bpmn:incoming>SequenceFlow_0ho4q8r</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1ytv1nh</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0kt35es</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1epjgrl</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1ytv1nh" sourceRef="ExclusiveGateway_1geujqr" targetRef="MainApplicantAssessmentCallActivity" />
+    <bpmn:sequenceFlow id="SequenceFlow_0kt35es" sourceRef="ExclusiveGateway_1geujqr" targetRef="CoApplicantsAssessmentCallActivity" />
+    <bpmn:sequenceFlow id="SequenceFlow_1epjgrl" sourceRef="ExclusiveGateway_1geujqr" targetRef="GuarantorsAssessmentCallActivity" />
+    <bpmn:sequenceFlow id="SequenceFlow_0k87l9z" sourceRef="MainApplicantAssessmentCallActivity" targetRef="ExclusiveGateway_07rgk2v" />
+    <bpmn:sequenceFlow id="SequenceFlow_1p2kvhu" sourceRef="CoApplicantsAssessmentCallActivity" targetRef="ExclusiveGateway_07rgk2v" />
+    <bpmn:sequenceFlow id="SequenceFlow_0ff1orz" sourceRef="GuarantorsAssessmentCallActivity" targetRef="ExclusiveGateway_07rgk2v" />
+    <bpmn:parallelGateway id="ExclusiveGateway_07rgk2v">
+      <bpmn:incoming>SequenceFlow_0k87l9z</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1p2kvhu</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_0ff1orz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1umwtub</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="EndEvent_0fo2jwf">
+      <bpmn:incoming>SequenceFlow_1umwtub</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1umwtub" sourceRef="ExclusiveGateway_07rgk2v" targetRef="EndEvent_0fo2jwf" />
+    <bpmn:callActivity id="CoApplicantsAssessmentCallActivity" name="CoApplicants Assessment" calledElement="ApplicantAssessment">
+      <bpmn:incoming>SequenceFlow_0kt35es</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1p2kvhu</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:callActivity>
+    <bpmn:callActivity id="GuarantorsAssessmentCallActivity" name="Guarantors Assessment" calledElement="ApplicantAssessment">
+      <bpmn:incoming>SequenceFlow_1epjgrl</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0ff1orz</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:callActivity>
+    <bpmn:callActivity id="MainApplicantAssessmentCallActivity" name="Main Applicant Assessment" calledElement="ApplicantAssessment">
+      <bpmn:incoming>SequenceFlow_1ytv1nh</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0k87l9z</bpmn:outgoing>
+    </bpmn:callActivity>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ApplicantsAssessment">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="156" y="291" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0ho4q8r_di" bpmnElement="SequenceFlow_0ho4q8r">
+        <di:waypoint x="192" y="309" />
+        <di:waypoint x="242" y="309" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ParallelGateway_1o2cjpc_di" bpmnElement="ExclusiveGateway_1geujqr">
+        <dc:Bounds x="242" y="284" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ytv1nh_di" bpmnElement="SequenceFlow_1ytv1nh">
+        <di:waypoint x="267" y="284" />
+        <di:waypoint x="267" y="121" />
+        <di:waypoint x="342" y="121" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0kt35es_di" bpmnElement="SequenceFlow_0kt35es">
+        <di:waypoint x="292" y="309" />
+        <di:waypoint x="342" y="309" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1epjgrl_di" bpmnElement="SequenceFlow_1epjgrl">
+        <di:waypoint x="267" y="334" />
+        <di:waypoint x="267" y="479" />
+        <di:waypoint x="342" y="479" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0k87l9z_di" bpmnElement="SequenceFlow_0k87l9z">
+        <di:waypoint x="442" y="121" />
+        <di:waypoint x="517" y="121" />
+        <di:waypoint x="517" y="284" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1p2kvhu_di" bpmnElement="SequenceFlow_1p2kvhu">
+        <di:waypoint x="442" y="309" />
+        <di:waypoint x="492" y="309" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0ff1orz_di" bpmnElement="SequenceFlow_0ff1orz">
+        <di:waypoint x="442" y="479" />
+        <di:waypoint x="517" y="479" />
+        <di:waypoint x="517" y="334" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ParallelGateway_1h368cn_di" bpmnElement="ExclusiveGateway_07rgk2v">
+        <dc:Bounds x="492" y="284" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0fo2jwf_di" bpmnElement="EndEvent_0fo2jwf">
+        <dc:Bounds x="592" y="291" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1umwtub_di" bpmnElement="SequenceFlow_1umwtub">
+        <di:waypoint x="542" y="309" />
+        <di:waypoint x="592" y="309" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="CallActivity_1d11z02_di" bpmnElement="CoApplicantsAssessmentCallActivity">
+        <dc:Bounds x="342" y="269" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CallActivity_049475m_di" bpmnElement="GuarantorsAssessmentCallActivity">
+        <dc:Bounds x="342" y="439" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CallActivity_1cjab1m_di" bpmnElement="MainApplicantAssessmentCallActivity">
+        <dc:Bounds x="342" y="81" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

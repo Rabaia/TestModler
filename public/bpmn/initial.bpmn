@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:sdc="http://sdc.dk" id="Definitions_116v0yd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.1">
+  <bpmn:process id="applicant-assessment" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_0t7cafg</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="IsExistingCustomerGateway" name="Is existing customer ?" default="IsCustomerSequenceFlow">
+      <bpmn:incoming>SequenceFlow_036afdn</bpmn:incoming>
+      <bpmn:outgoing>NotACustomerSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>IsCustomerSequenceFlow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="NotACustomerSequenceFlow" name="Not a customer" sourceRef="IsExistingCustomerGateway" targetRef="CheckPEPTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">CustomerId == null</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="IsPEPGateway" name="Is PEP ?" default="SequenceFlow_1dzehq7">
+      <bpmn:incoming>SequenceFlow_070kudr</bpmn:incoming>
+      <bpmn:outgoing>IsOnPEPListSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1dzehq7</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1q1burs</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_070kudr" sourceRef="CheckPEPTask" targetRef="IsPEPGateway" />
+    <bpmn:sequenceFlow id="IsOnPEPListSequenceFlow" sourceRef="IsPEPGateway" targetRef="ExceptionIsOnPEPListEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsPep == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionIsOnPEPListEndEvent" name="Exception: Is on PEP-List">
+      <bpmn:incoming>IsOnPEPListSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionIsOnPEPList" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1dzehq7" sourceRef="IsPEPGateway" targetRef="CheckNationalRegistryTask" />
+    <bpmn:endEvent id="ExceptionMismatchingAddressInformationEndEvent" name="Exception: Mismatching address information">
+      <bpmn:incoming>MismatchingAddressInformationSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionMismatchingAddressInformation" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_1p65gzv">
+      <bpmn:incoming>IsCustomerSequenceFlow</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_07sbpbh</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0rdec0n</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="FetchSalaryTask" name="Fetch Salary" camunda:type="external" camunda:topic="FetchSalary">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="SSN != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_07xwcgo</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0q53pn3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0q53pn3" sourceRef="FetchSalaryTask" targetRef="ControlIncomeConsistencyTask" />
+    <bpmn:businessRuleTask id="ControlIncomeConsistencyTask" name="Control: income consistency" camunda:resultVariable="IsIncomeConsistent" camunda:decisionRef="ControlIncomeConsistency" camunda:mapDecisionResult="singleEntry">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="TaxInformation">TaxInformation</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:executionListener expression="TaxInformation != null" event="start" />
+        <camunda:executionListener expression="IsIncomeConsistent !=  null" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0q53pn3</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1sjczoi</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="IsTaxInformationConsistentGateway" name="Is tax information consistent ?" default="SequenceFlow_12y3ok5">
+      <bpmn:incoming>SequenceFlow_1sjczoi</bpmn:incoming>
+      <bpmn:outgoing>IncomeInconsistentSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_12y3ok5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1sjczoi" sourceRef="ControlIncomeConsistencyTask" targetRef="IsTaxInformationConsistentGateway" />
+    <bpmn:sequenceFlow id="IncomeInconsistentSequenceFlow" sourceRef="IsTaxInformationConsistentGateway" targetRef="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhaustedEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsIncomeConsistent == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhaustedEndEvent" name="Exception: Tolerance between tax- and income data entered by the customer and data fetched from Altinn is exhausted">
+      <bpmn:incoming>IncomeInconsistentSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhausted" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_12y3ok5" sourceRef="IsTaxInformationConsistentGateway" targetRef="ControlDisposalAmountTask" />
+    <bpmn:businessRuleTask id="ControlDisposalAmountTask" name="Control: Disposal amount" camunda:resultVariable="IsMonthlyDisposalAmountAcceptable" camunda:decisionRef="ControlDisposalAmount" camunda:mapDecisionResult="singleEntry">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="TaxInformation">TaxInformation</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:executionListener expression="TaxInformation != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_12y3ok5</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_11vjnp4</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="IsMonthlyDisposalAmountIsTooLowGateway" name="Is monthly disposal amount is too low ?" default="SequenceFlow_0kj257l">
+      <bpmn:incoming>SequenceFlow_11vjnp4</bpmn:incoming>
+      <bpmn:outgoing>MonthlyDisposalAmountIsTooLowSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0kj257l</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_11vjnp4" sourceRef="ControlDisposalAmountTask" targetRef="IsMonthlyDisposalAmountIsTooLowGateway" />
+    <bpmn:sequenceFlow id="MonthlyDisposalAmountIsTooLowSequenceFlow" sourceRef="IsMonthlyDisposalAmountIsTooLowGateway" targetRef="ExceptionMonthlyDisposalAmountIsTooLowEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsMonthlyDisposalAmountAcceptable == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionMonthlyDisposalAmountIsTooLowEndEvent" name="Exception: monthly disposal amount is too low">
+      <bpmn:incoming>MonthlyDisposalAmountIsTooLowSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionMonthlyDisposalAmountIsTooLow" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="IsCustomerSequenceFlow" name="Is customer" sourceRef="IsExistingCustomerGateway" targetRef="ExclusiveGateway_1p65gzv" />
+    <bpmn:businessRuleTask id="ControlPDTask" name="Control: PD" camunda:resultVariable="IsPDAcceptable" camunda:decisionRef="ControlPD" camunda:mapDecisionResult="singleEntry">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="PD != null" event="start" />
+        <camunda:executionListener expression="IsPDAcceptable != null" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0t7gdhr</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0si09an</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="IsPDIsTooHighGateway" name="Is PD is too high ?" default="SequenceFlow_0eeb52v">
+      <bpmn:incoming>SequenceFlow_0si09an</bpmn:incoming>
+      <bpmn:outgoing>PDIsTooHighSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0eeb52v</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="PDIsTooHighSequenceFlow" sourceRef="IsPDIsTooHighGateway" targetRef="ExceptionPDIsTooHighEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsPDAcceptable == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionPDIsTooHighEndEvent" name="Exception: PD is too high">
+      <bpmn:incoming>PDIsTooHighSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionPDIsTooHigh" />
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="IsExistingCustomerGateway1" name="Is existing customer ?" default="NotACustomerSequenceFlow1">
+      <bpmn:incoming>SequenceFlow_0kj257l</bpmn:incoming>
+      <bpmn:outgoing>ExistingCustomerSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>NotACustomerSequenceFlow1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0kj257l" sourceRef="IsMonthlyDisposalAmountIsTooLowGateway" targetRef="IsExistingCustomerGateway1" />
+    <bpmn:sequenceFlow id="ExistingCustomerSequenceFlow" name="Existing customer" sourceRef="IsExistingCustomerGateway1" targetRef="FetchPDFromEDWTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">CustomerId != null</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_0iaowi7" sourceRef="FetchDebtRegistryTask" targetRef="ControlUnsecuredLoansTask" />
+    <bpmn:businessRuleTask id="ControlUnsecuredLoansTask" name="Control: Unsecured loans" camunda:resultVariable="IsLimitAcceptable" camunda:decisionRef="ControlUnsecuredLoans" camunda:mapDecisionResult="singleEntry">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="TaxInformation">TaxInformation</camunda:inputParameter>
+          <camunda:inputParameter name="DebtInformation">DebtInformation</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:executionListener expression="TaxInformation != null" event="start" />
+        <camunda:executionListener expression="DebtInformation != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0iaowi7</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_06wt4e2</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:exclusiveGateway id="IsLimitExhaustedGateway" name="Is limit exhausted ?" default="SequenceFlow_09hlhkh">
+      <bpmn:incoming>SequenceFlow_06wt4e2</bpmn:incoming>
+      <bpmn:outgoing>UnsecuredLoansExhaustLimitSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_09hlhkh</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_06wt4e2" sourceRef="ControlUnsecuredLoansTask" targetRef="IsLimitExhaustedGateway" />
+    <bpmn:sequenceFlow id="UnsecuredLoansExhaustLimitSequenceFlow" sourceRef="IsLimitExhaustedGateway" targetRef="ExceptionUnsecuredLoansExhaustLimitEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsLimitAcceptable == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionUnsecuredLoansExhaustLimitEndEvent" name="Exception: Unsecured loans exhaust limit">
+      <bpmn:incoming>UnsecuredLoansExhaustLimitSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionUnsecuredLoansExhaustLimit" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_09hlhkh" sourceRef="IsLimitExhaustedGateway" targetRef="FetchCreditScoreTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_0f63ujr" sourceRef="FetchCreditScoreTask" targetRef="ControlCreditScoreTask" />
+    <bpmn:exclusiveGateway id="IsDisqualifiedByCreditScoreGateway" name="Is Disqualified by credit score ?" default="SequenceFlow_1aidmj2">
+      <bpmn:incoming>SequenceFlow_15t1h5b</bpmn:incoming>
+      <bpmn:outgoing>DisqualifiedByCreditScoreSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1aidmj2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_15t1h5b" sourceRef="ControlCreditScoreTask" targetRef="IsDisqualifiedByCreditScoreGateway" />
+    <bpmn:sequenceFlow id="DisqualifiedByCreditScoreSequenceFlow" sourceRef="IsDisqualifiedByCreditScoreGateway" targetRef="ExceptionDisqualifiedByCreditScoreEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsCreditScoreAcceptable == false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="ExceptionDisqualifiedByCreditScoreEndEvent" name="Exception: Disqualified by credit score">
+      <bpmn:incoming>DisqualifiedByCreditScoreSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="ExceptionDisqualifiedByCreditScore" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_0vytujs">
+      <bpmn:incoming>SequenceFlow_1aidmj2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1aidmj2" sourceRef="IsDisqualifiedByCreditScoreGateway" targetRef="EndEvent_0vytujs" />
+    <bpmn:exclusiveGateway id="IsAddressInformationMatchingGateway" name="Is address information matching ?" default="SequenceFlow_07sbpbh">
+      <bpmn:incoming>SequenceFlow_06ik21g</bpmn:incoming>
+      <bpmn:outgoing>MismatchingAddressInformationSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_07sbpbh</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_06ik21g" sourceRef="CheckNationalRegistryTask" targetRef="IsAddressInformationMatchingGateway" />
+    <bpmn:sequenceFlow id="MismatchingAddressInformationSequenceFlow" sourceRef="IsAddressInformationMatchingGateway" targetRef="ExceptionMismatchingAddressInformationEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsAddressCorrect != true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_07sbpbh" sourceRef="IsAddressInformationMatchingGateway" targetRef="ExclusiveGateway_1p65gzv" />
+    <bpmn:serviceTask id="CheckPEPTask" name="Check PEP">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="SSN != null" event="start" />
+        <camunda:inputOutput>
+          <camunda:inputParameter name="FullName">FirstName + " " + LastName</camunda:inputParameter>
+          <camunda:inputParameter name="Fuzzy">True</camunda:inputParameter>
+          <camunda:outputParameter name="IsOnTerrorList">TerrorListMatches.Any()</camunda:outputParameter>
+          <camunda:outputParameter name="IsPep">PEPMatches.Any()</camunda:outputParameter>
+        </camunda:inputOutput>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="Operation">CheckPoliticalyExposedPerson</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>SDCSoap</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>NotACustomerSequenceFlow</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_070kudr</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="ExceptionIsOnTerrorListEndEvent" name="Exception: Is on Terror-List">
+      <bpmn:incoming>SequenceFlow_1q1burs</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1rjqjm3" errorRef="ExceptionIsOnTerrorList" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1q1burs" sourceRef="IsPEPGateway" targetRef="ExceptionIsOnTerrorListEndEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsOnTerrorList == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_0rdec0n" sourceRef="ExclusiveGateway_1p65gzv" targetRef="PresentSBLConsentFormTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_07xwcgo" sourceRef="PresentSBLConsentFormTask" targetRef="FetchSalaryTask" />
+    <bpmn:sequenceFlow id="NotACustomerSequenceFlow1" name="Not a customer" sourceRef="IsExistingCustomerGateway1" targetRef="FetchPDFromExperianTask" />
+    <bpmn:exclusiveGateway id="ExclusiveGateway_1j20bqf">
+      <bpmn:incoming>SequenceFlow_0twe5fi</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1ac78ce</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0t7gdhr</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0twe5fi" sourceRef="FetchPDFromExperianTask" targetRef="ExclusiveGateway_1j20bqf" />
+    <bpmn:sequenceFlow id="SequenceFlow_1ac78ce" sourceRef="FetchPDFromEDWTask" targetRef="ExclusiveGateway_1j20bqf" />
+    <bpmn:sequenceFlow id="SequenceFlow_0t7gdhr" sourceRef="ExclusiveGateway_1j20bqf" targetRef="ControlPDTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_0si09an" sourceRef="ControlPDTask" targetRef="IsPDIsTooHighGateway" />
+    <bpmn:sequenceFlow id="SequenceFlow_0eeb52v" sourceRef="IsPDIsTooHighGateway" targetRef="FetchDebtRegistryTask" />
+    <bpmn:exclusiveGateway id="IsMainApplicantGateway" name="Is Main Applicant" default="SequenceFlow_0dyzgux">
+      <bpmn:incoming>SequenceFlow_0t7cafg</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0dyzgux</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_0b3k35c</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0dyzgux" sourceRef="IsMainApplicantGateway" targetRef="SendInvitationTask" />
+    <bpmn:exclusiveGateway id="ExclusiveGateway_036nhba">
+      <bpmn:incoming>SequenceFlow_0b3k35c</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_16bttq9</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_036afdn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_036afdn" sourceRef="ExclusiveGateway_036nhba" targetRef="IsExistingCustomerGateway" />
+    <bpmn:sequenceFlow id="SequenceFlow_0b3k35c" sourceRef="IsMainApplicantGateway" targetRef="ExclusiveGateway_036nhba">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">IsMainApplicant == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_16bttq9" sourceRef="EnterCoApplicantDataTask" targetRef="ExclusiveGateway_036nhba" />
+    <bpmn:boundaryEvent id="EveryDayBoundaryEvent" name="Every day" cancelActivity="false" attachedToRef="EnterCoApplicantDataTask">
+      <bpmn:outgoing>SequenceFlow_1l1sva9</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">0 0 0 ? * * *</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1l1sva9" sourceRef="EveryDayBoundaryEvent" targetRef="SendReminderTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_0qmjkx6" sourceRef="SendInvitationTask" targetRef="EnterCoApplicantDataTask" />
+    <bpmn:serviceTask id="CheckNationalRegistryTask" name="Check National Registry" camunda:type="external" camunda:topic="CheckNationalRegistry">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="Input_1grr9b0" />
+          <camunda:outputParameter name="Output_1u8vlne" />
+        </camunda:inputOutput>
+        <camunda:executionListener expression="SSN != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1dzehq7</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_06ik21g</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="FetchPDFromEDWTask" name="Fetch PD from EDW" camunda:type="external" camunda:topic="FetchPDFromEDW">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="SSN != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>ExistingCustomerSequenceFlow</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1ac78ce</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="FetchPDFromExperianTask" name="Fetch PD from Experian" camunda:type="external" camunda:topic="FetchPDFromExperian">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="SSN != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>NotACustomerSequenceFlow1</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0twe5fi</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="FetchDebtRegistryTask" name="Fetch Debt Registry" camunda:type="external" camunda:topic="FetchDebtRegistry">
+      <bpmn:incoming>SequenceFlow_0eeb52v</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0iaowi7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="FetchCreditScoreTask" name="Fetch Credit score" camunda:type="external" camunda:topic="FetchCreditScore">
+      <bpmn:incoming>SequenceFlow_09hlhkh</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0f63ujr</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="ControlCreditScoreTask" name="Control: Credit score" camunda:resultVariable="IsCreditScoreAcceptable" camunda:decisionRef="ControlCreditScore" camunda:mapDecisionResult="singleEntry">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="CreditScore">CreditScore</camunda:inputParameter>
+          <camunda:inputParameter name="PD">PD</camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:executionListener expression="CreditScore != null" event="start" />
+        <camunda:executionListener expression="PD != null" event="start" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0f63ujr</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_15t1h5b</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:serviceTask id="SendInvitationTask" name="Send Invitation" camunda:type="external" camunda:topic="SendInvitation">
+      <bpmn:incoming>SequenceFlow_0dyzgux</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0qmjkx6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="PresentSBLConsentFormTask" name="Present SBL Consent form" camunda:type="external" camunda:topic="PresentSBLConsentForm">
+      <bpmn:incoming>SequenceFlow_0rdec0n</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_07xwcgo</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="SendReminderTask" name="Send Reminder">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="TemplateId">"MortgageProcessReminder"</camunda:inputParameter>
+            <camunda:inputParameter name="CustomerId">CustomerId</camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>Notification</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1l1sva9</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="EnterCoApplicantDataTask" name="Enter CoApplicant Data" camunda:formKey="ApplicantForm" camunda:assignee="NationalIdentificationNumber">
+      <bpmn:incoming>SequenceFlow_0qmjkx6</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_16bttq9</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0t7cafg" sourceRef="StartEvent_1" targetRef="IsMainApplicantGateway" />
+    <bpmn:textAnnotation id="TextAnnotation_0jbk3u3">
+      <bpmn:text>Folkeregisteret</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_07d8dv2" sourceRef="CheckNationalRegistryTask" targetRef="TextAnnotation_0jbk3u3" />
+    <bpmn:textAnnotation id="TextAnnotation_02t206f">
+      <bpmn:text>Altinn</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1okd94k" sourceRef="FetchSalaryTask" targetRef="TextAnnotation_02t206f" />
+    <bpmn:textAnnotation id="TextAnnotation_0wzsmg6">
+      <bpmn:text>Gjeldsregister</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1o3i6yo" sourceRef="FetchDebtRegistryTask" targetRef="TextAnnotation_0wzsmg6" />
+    <bpmn:textAnnotation id="TextAnnotation_1ck1ur3">
+      <bpmn:text>Experian or Bisnode</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1wdmgja" sourceRef="FetchCreditScoreTask" targetRef="TextAnnotation_1ck1ur3" />
+    <bpmn:textAnnotation id="TextAnnotation_1tmv1ow">
+      <bpmn:text>To be clarified what is the rule</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1n04pej" sourceRef="IsPEPGateway" targetRef="TextAnnotation_1tmv1ow" />
+    <bpmn:textAnnotation id="TextAnnotation_1pwa6hq">
+      <bpmn:text>Redirect to Altinn to confirm giving consent, retreive token</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1bpb4za" sourceRef="PresentSBLConsentFormTask" targetRef="TextAnnotation_1pwa6hq" />
+    <bpmn:textAnnotation id="TextAnnotation_0flgvwx">
+      <bpmn:text>Experian or Bisnode</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0739shw" sourceRef="FetchPDFromExperianTask" targetRef="TextAnnotation_0flgvwx" />
+    <bpmn:textAnnotation id="TextAnnotation_0j11el4">
+      <bpmn:text>Dow Jones</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_11sikk4" sourceRef="CheckPEPTask" targetRef="TextAnnotation_0j11el4" />
+  </bpmn:process>
+  <bpmn:error id="ExceptionIsOnPEPList" name="ExceptionIsOnPEPList" errorCode="2" />
+  <bpmn:error id="ExceptionIsOnTerrorList" name="ExceptionIsOnTerrorList" errorCode="1" />
+  <bpmn:error id="ExceptionMismatchingAddressInformation" name="ExceptionMismatchingAddressInformation" errorCode="3" />
+  <bpmn:error id="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhausted" name="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhausted" errorCode="4" />
+  <bpmn:error id="ExceptionMonthlyDisposalAmountIsTooLow" name="ExceptionMonthlyDisposalAmountIsTooLow" errorCode="5" />
+  <bpmn:error id="ExceptionPDIsTooHigh" name="ExceptionPDIsTooHigh" errorCode="6" />
+  <bpmn:error id="ExceptionUnsecuredLoansExhaustLimit" name="ExceptionUnsecuredLoansExhaustLimit" errorCode="7" />
+  <bpmn:error id="ExceptionDisqualifiedByCreditScore" name="ExceptionDisqualifiedByCreditScore" errorCode="8" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="applicant-assessment">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="156" y="479" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1w1zx3x_di" bpmnElement="IsExistingCustomerGateway" isMarkerVisible="true">
+        <dc:Bounds x="645" y="472" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="718" y="483" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0n5iuee_di" bpmnElement="NotACustomerSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="670" y="472" />
+        <di:waypoint x="670" y="306" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="680" y="441" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0d0qatw_di" bpmnElement="IsPEPGateway" isMarkerVisible="true">
+        <dc:Bounds x="913" y="241" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="877" y="225" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_070kudr_di" bpmnElement="SequenceFlow_070kudr">
+        <di:waypoint x="720" y="266" />
+        <di:waypoint x="913" y="266" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0uislkv_di" bpmnElement="IsOnPEPListSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="963" y="266" />
+        <di:waypoint x="1162" y="266" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="478" y="103" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0k16t8z_di" bpmnElement="ExceptionIsOnPEPListEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1162" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1210" y="252" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1dzehq7_di" bpmnElement="SequenceFlow_1dzehq7">
+        <di:waypoint x="938" y="291" />
+        <di:waypoint x="938" y="457" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_04im2ec_di" bpmnElement="ExceptionMismatchingAddressInformationEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1162" y="479" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1217" y="470" width="62" height="53" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1p65gzv_di" bpmnElement="ExclusiveGateway_1p65gzv" isMarkerVisible="true">
+        <dc:Bounds x="1038" y="587" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1me2n8s_di" bpmnElement="FetchSalaryTask">
+        <dc:Bounds x="1412" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0q53pn3_di" bpmnElement="SequenceFlow_0q53pn3">
+        <di:waypoint x="1512" y="612" />
+        <di:waypoint x="1604" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BusinessRuleTask_0ud7qxl_di" bpmnElement="ControlIncomeConsistencyTask">
+        <dc:Bounds x="1604" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0ijkpk2_di" bpmnElement="IsTaxInformationConsistentGateway" isMarkerVisible="true">
+        <dc:Bounds x="1749" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1732" y="660" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1sjczoi_di" bpmnElement="SequenceFlow_1sjczoi">
+        <di:waypoint x="1704" y="612" />
+        <di:waypoint x="1749" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0fi2ucj_di" bpmnElement="IncomeInconsistentSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="1774" y="587" />
+        <di:waypoint x="1774" y="284" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1051" y="222" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1xnm3n9_di" bpmnElement="ExceptionToleranceBetweenTaxAndIncomeDataEnteredByTheCustomerAndDataFetchedFromAltinnIsExhaustedEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1756" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1655" y="206" width="86" height="119" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_12y3ok5_di" bpmnElement="SequenceFlow_12y3ok5">
+        <di:waypoint x="1799" y="612" />
+        <di:waypoint x="1852" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BusinessRuleTask_1ilu5ax_di" bpmnElement="ControlDisposalAmountTask">
+        <dc:Bounds x="1852" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0sl0vip_di" bpmnElement="IsMonthlyDisposalAmountIsTooLowGateway" isMarkerVisible="true">
+        <dc:Bounds x="1999" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1983" y="654" width="82" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_11vjnp4_di" bpmnElement="SequenceFlow_11vjnp4">
+        <di:waypoint x="1952" y="612" />
+        <di:waypoint x="1999" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1q2mfdw_di" bpmnElement="MonthlyDisposalAmountIsTooLowSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="2024" y="587" />
+        <di:waypoint x="2024" y="284" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1312" y="210" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_11p0w6c_di" bpmnElement="ExceptionMonthlyDisposalAmountIsTooLowEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="2006" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1901" y="246" width="87" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_17c81qf_di" bpmnElement="IsCustomerSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="670" y="522" />
+        <di:waypoint x="670" y="612" />
+        <di:waypoint x="1038" y="612" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="688" y="538" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BusinessRuleTask_1frruzj_di" bpmnElement="ControlPDTask">
+        <dc:Bounds x="2727" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_15mgk9j_di" bpmnElement="IsPDIsTooHighGateway" isMarkerVisible="true">
+        <dc:Bounds x="2877" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2857" y="644" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0bmapne_di" bpmnElement="PDIsTooHighSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="2902" y="587" />
+        <di:waypoint x="2902" y="284" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1536" y="421" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0ajzd2l_di" bpmnElement="ExceptionPDIsTooHighEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="2884" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2861" y="211" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0uv42ev_di" bpmnElement="IsExistingCustomerGateway1" isMarkerVisible="true">
+        <dc:Bounds x="2247" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2245" y="557" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0kj257l_di" bpmnElement="SequenceFlow_0kj257l">
+        <di:waypoint x="2049" y="612" />
+        <di:waypoint x="2247" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0iqr5zo_di" bpmnElement="ExistingCustomerSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="2272" y="637" />
+        <di:waypoint x="2272" y="704" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2169" y="670" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0iaowi7_di" bpmnElement="SequenceFlow_0iaowi7">
+        <di:waypoint x="3099" y="612" />
+        <di:waypoint x="3149" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BusinessRuleTask_06ucpo6_di" bpmnElement="ControlUnsecuredLoansTask">
+        <dc:Bounds x="3149" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1es303x_di" bpmnElement="IsLimitExhaustedGateway" isMarkerVisible="true">
+        <dc:Bounds x="3299" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3282" y="644" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_06wt4e2_di" bpmnElement="SequenceFlow_06wt4e2">
+        <di:waypoint x="3249" y="612" />
+        <di:waypoint x="3299" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1g4lr3s_di" bpmnElement="UnsecuredLoansExhaustLimitSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="3324" y="587" />
+        <di:waypoint x="3324" y="284" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1943" y="206" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1q5w1xe_di" bpmnElement="ExceptionUnsecuredLoansExhaustLimitEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="3306" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3355" y="246" width="84" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_09hlhkh_di" bpmnElement="SequenceFlow_09hlhkh">
+        <di:waypoint x="3349" y="612" />
+        <di:waypoint x="3399" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0f63ujr_di" bpmnElement="SequenceFlow_0f63ujr">
+        <di:waypoint x="3499" y="612" />
+        <di:waypoint x="3549" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0hsfw5s_di" bpmnElement="IsDisqualifiedByCreditScoreGateway" isMarkerVisible="true">
+        <dc:Bounds x="3699" y="587" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3683" y="644" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_15t1h5b_di" bpmnElement="SequenceFlow_15t1h5b">
+        <di:waypoint x="3649" y="612" />
+        <di:waypoint x="3699" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1eys502_di" bpmnElement="DisqualifiedByCreditScoreSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="3724" y="587" />
+        <di:waypoint x="3724" y="284" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2340" y="216" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_07glyj4_di" bpmnElement="ExceptionDisqualifiedByCreditScoreEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="3706" y="248" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3775" y="246" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0vytujs_di" bpmnElement="EndEvent_0vytujs">
+        <dc:Bounds x="3794" y="594" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1aidmj2_di" bpmnElement="SequenceFlow_1aidmj2">
+        <di:waypoint x="3749" y="612" />
+        <di:waypoint x="3794" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_04g0p21_di" bpmnElement="IsAddressInformationMatchingGateway" isMarkerVisible="true">
+        <dc:Bounds x="1038" y="472" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1035" y="420" width="55" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_06ik21g_di" bpmnElement="SequenceFlow_06ik21g">
+        <di:waypoint x="988" y="497" />
+        <di:waypoint x="1038" y="497" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_11q4x8i_di" bpmnElement="MismatchingAddressInformationSequenceFlow" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="1088" y="497" />
+        <di:waypoint x="1162" y="497" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="540" y="170" width="62" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_07sbpbh_di" bpmnElement="SequenceFlow_07sbpbh">
+        <di:waypoint x="1063" y="522" />
+        <di:waypoint x="1063" y="587" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0jbk3u3_di" bpmnElement="TextAnnotation_0jbk3u3">
+        <dc:Bounds x="888" y="561" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_07d8dv2_di" bpmnElement="Association_07d8dv2">
+        <di:waypoint x="938" y="537" />
+        <di:waypoint x="938" y="561" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_02t206f_di" bpmnElement="TextAnnotation_02t206f">
+        <dc:Bounds x="1412" y="715" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1okd94k_di" bpmnElement="Association_1okd94k">
+        <di:waypoint x="1462" y="652" />
+        <di:waypoint x="1462" y="715" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0wzsmg6_di" bpmnElement="TextAnnotation_0wzsmg6">
+        <dc:Bounds x="2999" y="497" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1o3i6yo_di" bpmnElement="Association_1o3i6yo">
+        <di:waypoint x="3049" y="572" />
+        <di:waypoint x="3049" y="527" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_1ck1ur3_di" bpmnElement="TextAnnotation_1ck1ur3">
+        <dc:Bounds x="3399" y="492" width="100" height="40" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1wdmgja_di" bpmnElement="Association_1wdmgja">
+        <di:waypoint x="3449" y="572" />
+        <di:waypoint x="3449" y="532" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_1tmv1ow_di" bpmnElement="TextAnnotation_1tmv1ow">
+        <dc:Bounds x="963" y="161" width="100" height="39" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1n04pej_di" bpmnElement="Association_1n04pej">
+        <di:waypoint x="950" y="253" />
+        <di:waypoint x="996" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0xx2u68_di" bpmnElement="CheckPEPTask">
+        <dc:Bounds x="620" y="226" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_03sg1dk_di" bpmnElement="ExceptionIsOnTerrorListEndEvent" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1162" y="81" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1210" y="85" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1q1burs_di" bpmnElement="SequenceFlow_1q1burs">
+        <di:waypoint x="938" y="241" />
+        <di:waypoint x="938" y="99" />
+        <di:waypoint x="1162" y="99" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0rdec0n_di" bpmnElement="SequenceFlow_0rdec0n">
+        <di:waypoint x="1088" y="612" />
+        <di:waypoint x="1227" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_07xwcgo_di" bpmnElement="SequenceFlow_07xwcgo">
+        <di:waypoint x="1327" y="612" />
+        <di:waypoint x="1412" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_1pwa6hq_di" bpmnElement="TextAnnotation_1pwa6hq">
+        <dc:Bounds x="1227" y="715" width="100" height="82" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1bpb4za_di" bpmnElement="Association_1bpb4za">
+        <di:waypoint x="1277" y="652" />
+        <di:waypoint x="1277" y="715" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1gcsbta_di" bpmnElement="NotACustomerSequenceFlow1">
+        <di:waypoint x="2297" y="612" />
+        <di:waypoint x="2480" y="612" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2348" y="569" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1j20bqf_di" bpmnElement="ExclusiveGateway_1j20bqf" isMarkerVisible="true">
+        <dc:Bounds x="2617" y="587" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0twe5fi_di" bpmnElement="SequenceFlow_0twe5fi">
+        <di:waypoint x="2580" y="612" />
+        <di:waypoint x="2617" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ac78ce_di" bpmnElement="SequenceFlow_1ac78ce">
+        <di:waypoint x="2322" y="744" />
+        <di:waypoint x="2642" y="744" />
+        <di:waypoint x="2642" y="637" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0t7gdhr_di" bpmnElement="SequenceFlow_0t7gdhr">
+        <di:waypoint x="2667" y="612" />
+        <di:waypoint x="2727" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0si09an_di" bpmnElement="SequenceFlow_0si09an">
+        <di:waypoint x="2827" y="612" />
+        <di:waypoint x="2877" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0flgvwx_di" bpmnElement="TextAnnotation_0flgvwx">
+        <dc:Bounds x="2480" y="492" width="100" height="39" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0739shw_di" bpmnElement="Association_0739shw">
+        <di:waypoint x="2530" y="572" />
+        <di:waypoint x="2530" y="531" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0j11el4_di" bpmnElement="TextAnnotation_0j11el4">
+        <dc:Bounds x="620" y="166" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_11sikk4_di" bpmnElement="Association_11sikk4">
+        <di:waypoint x="670" y="226" />
+        <di:waypoint x="670" y="196" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0eeb52v_di" bpmnElement="SequenceFlow_0eeb52v">
+        <di:waypoint x="2927" y="612" />
+        <di:waypoint x="2999" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_07nhj4j_di" bpmnElement="IsMainApplicantGateway" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="272" y="472" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="255" y="442" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0dyzgux_di" bpmnElement="SequenceFlow_0dyzgux">
+        <di:waypoint x="297" y="522" />
+        <di:waypoint x="297" y="572" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_036nhba_di" bpmnElement="ExclusiveGateway_036nhba" isMarkerVisible="true">
+        <dc:Bounds x="462" y="472" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_036afdn_di" bpmnElement="SequenceFlow_036afdn">
+        <di:waypoint x="512" y="497" />
+        <di:waypoint x="645" y="497" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0b3k35c_di" bpmnElement="SequenceFlow_0b3k35c">
+        <di:waypoint x="322" y="497" />
+        <di:waypoint x="462" y="497" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="-43" y="351" width="85" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_16bttq9_di" bpmnElement="SequenceFlow_16bttq9">
+        <di:waypoint x="487" y="572" />
+        <di:waypoint x="487" y="522" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BoundaryEvent_1lx0xuu_di" bpmnElement="EveryDayBoundaryEvent">
+        <dc:Bounds x="469" y="634" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="423" y="669" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1l1sva9_di" bpmnElement="SequenceFlow_1l1sva9">
+        <di:waypoint x="487" y="670" />
+        <di:waypoint x="487" y="730" />
+        <di:waypoint x="620" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0qmjkx6_di" bpmnElement="SequenceFlow_0qmjkx6">
+        <di:waypoint x="347" y="612" />
+        <di:waypoint x="437" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1diufju_di" bpmnElement="CheckNationalRegistryTask">
+        <dc:Bounds x="888" y="457" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0o3dhsx_di" bpmnElement="FetchPDFromEDWTask">
+        <dc:Bounds x="2222" y="704" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1rq5uxh_di" bpmnElement="FetchPDFromExperianTask">
+        <dc:Bounds x="2480" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1cwl7uv_di" bpmnElement="FetchDebtRegistryTask">
+        <dc:Bounds x="2999" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1y4gt07_di" bpmnElement="FetchCreditScoreTask">
+        <dc:Bounds x="3399" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BusinessRuleTask_0ejk80s_di" bpmnElement="ControlCreditScoreTask">
+        <dc:Bounds x="3549" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1fsirrl_di" bpmnElement="SendInvitationTask">
+        <dc:Bounds x="247" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1sfoc51_di" bpmnElement="PresentSBLConsentFormTask">
+        <dc:Bounds x="1227" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0qkptg4_di" bpmnElement="SendReminderTask">
+        <dc:Bounds x="620" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_18udn9l_di" bpmnElement="EnterCoApplicantDataTask" bioc:stroke="black" bioc:fill="white">
+        <dc:Bounds x="437" y="572" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0t7cafg_di" bpmnElement="SequenceFlow_0t7cafg">
+        <di:waypoint x="192" y="497" />
+        <di:waypoint x="272" y="497" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

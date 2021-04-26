@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_15re0a3" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.1">
+  <bpmn:process id="collateral-assessment" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_0khs8vo</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0khs8vo" sourceRef="StartEvent_1" targetRef="FetchCollateralValueTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_1iyove7" sourceRef="FetchCollateralValueTask" targetRef="FetchRegisteredLiabilitiesTask" />
+    <bpmn:sequenceFlow id="SequenceFlow_0jvwdtl" sourceRef="FetchRegisteredLiabilitiesTask" targetRef="CalculationLTVTask" />
+    <bpmn:exclusiveGateway id="ControlLTVGateway" name="Control: LTV" default="SequenceFlow_1u28om8">
+      <bpmn:incoming>SequenceFlow_0x5ccy7</bpmn:incoming>
+      <bpmn:outgoing>LTVIsTooHighSequenceFlow</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1u28om8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_0x5ccy7" sourceRef="CalculationLTVTask" targetRef="ControlLTVGateway" />
+    <bpmn:businessRuleTask id="CalculationLTVTask" name="Calculation: LTV">
+      <bpmn:incoming>SequenceFlow_0jvwdtl</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0x5ccy7</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:sequenceFlow id="LTVIsTooHighSequenceFlow" sourceRef="ControlLTVGateway" targetRef="ExceptionLTVIsTooHighEndEvent" />
+    <bpmn:endEvent id="ExceptionLTVIsTooHighEndEvent" name="Exception: LTV is too high">
+      <bpmn:incoming>LTVIsTooHighSequenceFlow</bpmn:incoming>
+      <bpmn:errorEventDefinition />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_1jlbjbg">
+      <bpmn:incoming>SequenceFlow_1edkncb</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1u28om8" sourceRef="ControlLTVGateway" targetRef="BusinessRuleTask_1rqyszq" />
+    <bpmn:serviceTask id="FetchCollateralValueTask" name="Fetch collateral value" camunda:type="external" camunda:topic="FetchCollateralValue">
+      <bpmn:incoming>SequenceFlow_0khs8vo</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1iyove7</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true" />
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="FetchRegisteredLiabilitiesTask" name="Fetch registered liabilities">
+      <bpmn:incoming>SequenceFlow_1iyove7</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0jvwdtl</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true" />
+    </bpmn:serviceTask>
+    <bpmn:businessRuleTask id="BusinessRuleTask_1rqyszq" name="Calculation: Mortgage Regulations">
+      <bpmn:incoming>SequenceFlow_1u28om8</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1jb4uc1</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1jb4uc1" sourceRef="BusinessRuleTask_1rqyszq" targetRef="ExclusiveGateway_120332i" />
+    <bpmn:exclusiveGateway id="ExclusiveGateway_120332i" name="Control: Mortgage Regulations" default="SequenceFlow_1edkncb">
+      <bpmn:incoming>SequenceFlow_1jb4uc1</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1edkncb</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1u2hn8s</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1edkncb" sourceRef="ExclusiveGateway_120332i" targetRef="EndEvent_1jlbjbg" />
+    <bpmn:sequenceFlow id="SequenceFlow_1u2hn8s" sourceRef="ExclusiveGateway_120332i" targetRef="EndEvent_1w2cm2j" />
+    <bpmn:endEvent id="EndEvent_1w2cm2j" name="Exception: Mortgage Regulations Failed">
+      <bpmn:incoming>SequenceFlow_1u2hn8s</bpmn:incoming>
+      <bpmn:errorEventDefinition />
+    </bpmn:endEvent>
+    <bpmn:textAnnotation id="TextAnnotation_0888ro6">
+      <bpmn:text>Eiendomsverdi</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0jlg0gl" sourceRef="FetchCollateralValueTask" targetRef="TextAnnotation_0888ro6" />
+    <bpmn:textAnnotation id="TextAnnotation_18n6fm8">
+      <bpmn:text>Ambita</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0rocc6j" sourceRef="FetchRegisteredLiabilitiesTask" targetRef="TextAnnotation_18n6fm8" />
+    <bpmn:textAnnotation id="TextAnnotation_0w2heb0">
+      <bpmn:text>Get the estimated market values for both the property to be bought/refinanced and for the property offered as collateral.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1cswrhg" sourceRef="FetchCollateralValueTask" targetRef="TextAnnotation_0w2heb0" />
+    <bpmn:textAnnotation id="TextAnnotation_1p8wwpe">
+      <bpmn:text>Get registered liabilities for both the property to be bought/refinanced and for the property offered as collateral</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0udx0id" sourceRef="FetchRegisteredLiabilitiesTask" targetRef="TextAnnotation_1p8wwpe" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="collateral-assessment">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0khs8vo_di" bpmnElement="SequenceFlow_0khs8vo">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="255" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1iyove7_di" bpmnElement="SequenceFlow_1iyove7">
+        <di:waypoint x="355" y="177" />
+        <di:waypoint x="387" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0jvwdtl_di" bpmnElement="SequenceFlow_0jvwdtl">
+        <di:waypoint x="487" y="177" />
+        <di:waypoint x="510" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_12cdkhk_di" bpmnElement="ControlLTVGateway" isMarkerVisible="true">
+        <dc:Bounds x="646" y="152" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="640" y="113" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0x5ccy7_di" bpmnElement="SequenceFlow_0x5ccy7">
+        <di:waypoint x="610" y="177" />
+        <di:waypoint x="646" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BusinessRuleTask_1iz0yys_di" bpmnElement="CalculationLTVTask">
+        <dc:Bounds x="510" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0vxtmg1_di" bpmnElement="LTVIsTooHighSequenceFlow">
+        <di:waypoint x="671" y="202" />
+        <di:waypoint x="671" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="576" y="244" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1jnqhby_di" bpmnElement="ExceptionLTVIsTooHighEndEvent">
+        <dc:Bounds x="653" y="300" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="544" y="304" width="86" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1jlbjbg_di" bpmnElement="EndEvent_1jlbjbg">
+        <dc:Bounds x="996" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1u28om8_di" bpmnElement="SequenceFlow_1u28om8">
+        <di:waypoint x="696" y="177" />
+        <di:waypoint x="737" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0888ro6_di" bpmnElement="TextAnnotation_0888ro6">
+        <dc:Bounds x="255" y="63" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0jlg0gl_di" bpmnElement="Association_0jlg0gl">
+        <di:waypoint x="305" y="137" />
+        <di:waypoint x="305" y="93" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_18n6fm8_di" bpmnElement="TextAnnotation_18n6fm8">
+        <dc:Bounds x="387" y="63" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0rocc6j_di" bpmnElement="Association_0rocc6j">
+        <di:waypoint x="437" y="137" />
+        <di:waypoint x="437" y="93" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1exiqf0_di" bpmnElement="FetchCollateralValueTask">
+        <dc:Bounds x="255" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0w2heb0_di" bpmnElement="TextAnnotation_0w2heb0">
+        <dc:Bounds x="255" y="303" width="100" height="138" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1cswrhg_di" bpmnElement="Association_1cswrhg">
+        <di:waypoint x="305" y="217" />
+        <di:waypoint x="305" y="303" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_1p8wwpe_di" bpmnElement="TextAnnotation_1p8wwpe">
+        <dc:Bounds x="387" y="310" width="100" height="124" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0udx0id_di" bpmnElement="Association_0udx0id">
+        <di:waypoint x="437" y="217" />
+        <di:waypoint x="437" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1aym7xv_di" bpmnElement="FetchRegisteredLiabilitiesTask">
+        <dc:Bounds x="387" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BusinessRuleTask_1rqyszq_di" bpmnElement="BusinessRuleTask_1rqyszq">
+        <dc:Bounds x="737" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1jb4uc1_di" bpmnElement="SequenceFlow_1jb4uc1">
+        <di:waypoint x="837" y="177" />
+        <di:waypoint x="886" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_120332i_di" bpmnElement="ExclusiveGateway_120332i" isMarkerVisible="true">
+        <dc:Bounds x="886" y="152" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="867" y="113" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1edkncb_di" bpmnElement="SequenceFlow_1edkncb">
+        <di:waypoint x="936" y="177" />
+        <di:waypoint x="996" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1u2hn8s_di" bpmnElement="SequenceFlow_1u2hn8s">
+        <di:waypoint x="911" y="202" />
+        <di:waypoint x="911" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1n20u2i_di" bpmnElement="EndEvent_1w2cm2j">
+        <dc:Bounds x="893" y="300" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="811" y="291" width="59" height="53" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
